@@ -1,0 +1,66 @@
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — LangGraph state checkpointing
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sdlc
+      POSTGRES_PASSWORD: sdlc_dev_password
+      POSTGRES_DB: sdlc_ai
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sdlc -d sdlc_ai"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # SDLC AI — Next.js application
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Required
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY in .env}
+
+      # PostgreSQL (uses the compose postgres service)
+      DATABASE_URL: postgresql://sdlc:sdlc_dev_password@postgres:5432/sdlc_ai
+
+      # GitHub (optional)
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      GITHUB_OWNER: ${GITHUB_OWNER:-}
+      GITHUB_REPO: ${GITHUB_REPO:-}
+
+      # MCP server auth tokens (optional — agents skip unconfigured servers)
+      LINEAR_API_KEY: ${LINEAR_API_KEY:-}
+      NOTION_API_KEY: ${NOTION_API_KEY:-}
+      PULUMI_ACCESS_TOKEN: ${PULUMI_ACCESS_TOKEN:-}
+      GOOGLE_STITCH_API_KEY: ${GOOGLE_STITCH_API_KEY:-}
+      SUPABASE_ACCESS_TOKEN: ${SUPABASE_ACCESS_TOKEN:-}
+
+      # MCP server URL overrides (optional)
+      MCP_STITCH_URL: ${MCP_STITCH_URL:-}
+      MCP_LINEAR_URL: ${MCP_LINEAR_URL:-}
+      MCP_PULUMI_URL: ${MCP_PULUMI_URL:-}
+      MCP_NOTION_URL: ${MCP_NOTION_URL:-}
+      MCP_SUPABASE_URL: ${MCP_SUPABASE_URL:-}
+
+      # Monitoring (optional)
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-}
+
+volumes:
+  pgdata:
