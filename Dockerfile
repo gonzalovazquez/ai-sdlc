@@ -27,6 +27,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Build requires these at build time (can be dummies for static pages)
 ENV ANTHROPIC_API_KEY=build-placeholder
 
+# Signals next.config.ts to use standalone output for Docker
+ARG DOCKER_BUILD=1
+ENV DOCKER_BUILD=${DOCKER_BUILD}
+
 RUN npm run build
 
 # ---------------------------------------------------------------------------
