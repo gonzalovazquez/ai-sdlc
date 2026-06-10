@@ -1,5 +1,5 @@
 import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { getOpusModel } from "../llm";
+import { getOllamaModel } from "../llm";
 import { agentLogger } from "../logger";
 import { getToolsForAgent } from "../mcp/tools";
 import { getLocalToolsForAgent } from "../local-tools";
@@ -78,7 +78,7 @@ QA feedback (if any): ${JSON.stringify(state.qaResults, null, 2)}`;
   log.info({ toolCount: tools.length }, "Loaded MCP and local tools");
 
   const response = await invokeWithTools(
-    getOpusModel(),
+    getOllamaModel(),
     [
       new SystemMessage(SYSTEM_PROMPT),
       ...state.messages,

@@ -1,5 +1,5 @@
 import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { getOpusModel } from "../llm";
+import { getOllamaModel } from "../llm";
 import { agentLogger } from "../logger";
 import { getToolsForAgent } from "../mcp/tools";
 import { invokeWithTools } from "./invoke-with-tools";
@@ -59,7 +59,7 @@ export async function architectAgentNode(
 ${JSON.stringify(state.projectConfig, null, 2)}`;
 
   const response = await invokeWithTools(
-    getOpusModel(),
+    getOllamaModel(),
     [
       new SystemMessage(SYSTEM_PROMPT),
       ...state.messages,

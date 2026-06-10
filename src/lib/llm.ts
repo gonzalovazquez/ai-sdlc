@@ -1,7 +1,9 @@
 import { ChatAnthropic } from "@langchain/anthropic";
+import { ChatOllama } from "@langchain/ollama";
 
 let _opus: ChatAnthropic | null = null;
 let _sonnet: ChatAnthropic | null = null;
+let _ollama: ChatOllama | null = null;
 
 /**
  * Opus 4.6 — used for complex reasoning agents (Architect, Code).
@@ -31,4 +33,20 @@ export function getSonnetModel(): ChatAnthropic {
     });
   }
   return _sonnet;
+}
+
+/**
+ * Qwen2.5 32B via local Ollama — used for all demo agents.
+ * Requires Ollama running at OLLAMA_BASE_URL (default: http://localhost:11434).
+ * Override model with OLLAMA_MODEL env var.
+ */
+export function getOllamaModel(): ChatOllama {
+  if (!_ollama) {
+    _ollama = new ChatOllama({
+      model: process.env.OLLAMA_MODEL ?? "qwen2.5:32b",
+      baseUrl: process.env.OLLAMA_BASE_URL ?? "http://localhost:11434",
+      temperature: 0.3,
+    });
+  }
+  return _ollama;
 }

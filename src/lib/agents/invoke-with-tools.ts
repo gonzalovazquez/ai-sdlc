@@ -1,5 +1,5 @@
 import { type BaseMessage, AIMessage, ToolMessage } from "@langchain/core/messages";
-import type { ChatAnthropic } from "@langchain/anthropic";
+import type { BaseChatModel, BindToolsInput } from "@langchain/core/language_models/chat_models";
 import type { DynamicStructuredTool } from "@langchain/core/tools";
 import { logger } from "../logger";
 
@@ -8,14 +8,14 @@ const log = logger.child({ module: "invoke-with-tools" });
 const MAX_TOOL_ROUNDS = 10;
 
 /**
- * Invoke a ChatAnthropic model with MCP tools bound.
+ * Invoke any LangChain chat model with tools bound.
  * Runs the tool-calling loop: if the model returns tool_calls, execute them
  * and feed results back until the model produces a final text response.
  *
  * If `tools` is empty, falls back to a plain invoke (no tool binding).
  */
 export async function invokeWithTools(
-  model: ChatAnthropic,
+  model: BaseChatModel,
   messages: BaseMessage[],
   tools: DynamicStructuredTool[]
 ): Promise<AIMessage> {
@@ -23,7 +23,7 @@ export async function invokeWithTools(
     return model.invoke(messages) as Promise<AIMessage>;
   }
 
-  const boundModel = model.bindTools(tools);
+  const boundModel = model.bindTools!(tools as BindToolsInput[]);
   const toolMap = new Map(tools.map((t) => [t.name, t]));
 
   const currentMessages = [...messages];

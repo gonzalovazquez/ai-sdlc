@@ -1,5 +1,5 @@
 import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { getSonnetModel } from "../llm";
+import { getOllamaModel } from "../llm";
 import { agentLogger } from "../logger";
 import { getToolsForAgent } from "../mcp/tools";
 import { invokeWithTools } from "./invoke-with-tools";
@@ -44,7 +44,7 @@ export async function pmAgentNode(
   log.info({ toolCount: tools.length }, "Loaded MCP tools");
 
   const response = await invokeWithTools(
-    getSonnetModel(),
+    getOllamaModel(),
     [new SystemMessage(SYSTEM_PROMPT), ...state.messages],
     tools
   );
