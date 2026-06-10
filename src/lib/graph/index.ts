@@ -18,4 +18,5 @@ export {
   routeAfterArchitect,
   routeAfterQA,
 } from "./sdlc-graph";
+export { getDemoGraph, ensureDemoGraphReady, buildDemoGraph } from "./demo-graph";
 export { getCheckpointer, ensureCheckpointerReady } from "./checkpointer";

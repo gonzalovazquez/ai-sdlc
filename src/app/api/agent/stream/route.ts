@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { HumanMessage } from "@langchain/core/messages";
-import { getSDLCGraph, ensureGraphReady } from "@/lib/graph";
+import { getDemoGraph, ensureDemoGraphReady } from "@/lib/graph";
 import { logger } from "@/lib/logger";
 
 const log = logger.child({ route: "/api/agent/stream" });
@@ -25,8 +25,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Ensure Postgres checkpoint tables exist before first graph use
-  await ensureGraphReady();
-  const graph = getSDLCGraph();
+  await ensureDemoGraphReady();
+  const graph = getDemoGraph();
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
