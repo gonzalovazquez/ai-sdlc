@@ -43,7 +43,7 @@ export function getSonnetModel(): ChatAnthropic {
 export function getOllamaModel(): ChatOllama {
   if (!_ollama) {
     _ollama = new ChatOllama({
-      model: process.env.OLLAMA_MODEL ?? "qwen2.5:32b",
+      model: process.env.OLLAMA_MODEL ?? "qwen3.5:35b",
       baseUrl: process.env.OLLAMA_BASE_URL ?? "http://localhost:11434",
       temperature: 0.3,
     });
