@@ -57,7 +57,20 @@ export function getOllamaModel(): ChatOllama {
 
 export type DemoProvider = "ollama" | "anthropic";
 
+// Runtime override set from the UI. Kept on globalThis so all route bundles
+// in the Next.js dev server see the same value.
+const globalState = globalThis as typeof globalThis & {
+  __demoProviderOverride?: DemoProvider;
+};
+
+export function setDemoProvider(provider: DemoProvider): void {
+  globalState.__demoProviderOverride = provider;
+}
+
 export function getDemoProvider(): DemoProvider {
+  if (globalState.__demoProviderOverride) {
+    return globalState.__demoProviderOverride;
+  }
   return process.env.LLM_PROVIDER === "anthropic" ? "anthropic" : "ollama";
 }
 

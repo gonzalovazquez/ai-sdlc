@@ -2,6 +2,7 @@
 
 import { useProjects } from "../context/projects-context";
 import { ProjectSidebarItem } from "./project-sidebar-item";
+import { ProviderToggle } from "./provider-toggle";
 
 interface ProjectSidebarProps {
   onNewProject: () => void;
@@ -56,6 +57,8 @@ export function ProjectSidebar({ onNewProject }: ProjectSidebarProps) {
           </div>
         </div>
       )}
+
+      <ProviderToggle />
     </aside>
   );
 }
