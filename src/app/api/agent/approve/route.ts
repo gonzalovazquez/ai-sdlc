@@ -38,7 +38,9 @@ export async function POST(req: NextRequest) {
         ],
       });
     } else {
-      // Rejected — send feedback and loop back to architect
+      // Rejected — send feedback and loop back to architect.
+      // Attribute the update to pm_agent so the next node to execute is
+      // architect_agent (asNode marks the node as already run).
       await graph.updateState(
         config,
         {
@@ -49,8 +51,7 @@ export async function POST(req: NextRequest) {
             ),
           ],
         },
-        // Resume from architect to re-do decisions
-        "architect_agent"
+        "pm_agent"
       );
     }
 

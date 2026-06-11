@@ -1,5 +1,5 @@
 import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { getOllamaModel } from "../llm";
+import { getDemoModel } from "../llm";
 import { agentLogger } from "../logger";
 import { getToolsForAgent } from "../mcp/tools";
 import { invokeWithTools } from "./invoke-with-tools";
@@ -33,18 +33,21 @@ architecture decisions.
 - Ensure consistent data models across platforms
 
 ## Output
-Respond with a JSON block in \`\`\`json fences:
+Respond with two parts:
+
+1. A human-readable explanation of your decisions, including the full ADR in markdown.
+
+2. A JSON block in \`\`\`json fences. Every JSON string value must be a single
+   line — never put raw newlines or markdown blocks inside JSON strings:
 {
   "architectureDecisions": {
     "uiPattern": "mvvm" | "tca" | "component-based",
     "dataLayer": "swiftdata" | "rest" | "graphql" | "supabase" | "none",
-    "navigation": "description of navigation approach",
+    "navigation": "one-line description of navigation approach",
     "packages": ["list", "of", "recommended", "packages"],
-    "adrContent": "Full ADR in markdown format"
+    "adrContent": "one-line summary of the ADR decision"
   }
-}
-
-Also include a human-readable explanation of your decisions.`;
+}`;
 
 export async function architectAgentNode(
   state: SDLCStateType
@@ -59,7 +62,7 @@ export async function architectAgentNode(
 ${JSON.stringify(state.projectConfig, null, 2)}`;
 
   const response = await invokeWithTools(
-    getOllamaModel(),
+    getDemoModel(),
     [
       new SystemMessage(SYSTEM_PROMPT),
       ...state.messages,

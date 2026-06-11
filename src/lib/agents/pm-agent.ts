@@ -1,5 +1,5 @@
 import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { getOllamaModel } from "../llm";
+import { getDemoModel } from "../llm";
 import { agentLogger } from "../logger";
 import { getToolsForAgent } from "../mcp/tools";
 import { invokeWithTools } from "./invoke-with-tools";
@@ -16,10 +16,15 @@ Your responsibilities:
 3. Create a structured breakdown of epics and user stories
 4. Write clear acceptance criteria
 
-You output a JSON block with the projectConfig and a summary of requirements.
 Always ask clarifying questions if the description is ambiguous.
 
-When you have enough information, respond with a JSON block wrapped in \`\`\`json fences:
+When you have enough information, respond with two parts:
+
+1. A markdown summary of the requirements: epics, user stories, and acceptance criteria.
+
+2. A JSON block wrapped in \`\`\`json fences containing ONLY the projectConfig.
+   Do NOT put markdown, requirements text, or raw newlines inside JSON strings —
+   every string value must be a single line.
 {
   "projectConfig": {
     "name": "...",
@@ -30,8 +35,7 @@ When you have enough information, respond with a JSON block wrapped in \`\`\`jso
     "hasAuth": true/false,
     "screenCount": number,
     "dataSources": ["..."]
-  },
-  "requirements": "markdown summary of requirements, epics, stories"
+  }
 }`;
 
 export async function pmAgentNode(
@@ -44,7 +48,7 @@ export async function pmAgentNode(
   log.info({ toolCount: tools.length }, "Loaded MCP tools");
 
   const response = await invokeWithTools(
-    getOllamaModel(),
+    getDemoModel(),
     [new SystemMessage(SYSTEM_PROMPT), ...state.messages],
     tools
   );

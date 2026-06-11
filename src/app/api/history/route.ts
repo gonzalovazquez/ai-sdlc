@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSDLCGraph } from "@/lib/graph";
+import { getDemoGraph } from "@/lib/graph";
 
 /**
  * GET /api/history?threadId=xxx
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const graph = getSDLCGraph();
+    const graph = getDemoGraph();
     const state = await graph.getState({
       configurable: { thread_id: threadId },
     });

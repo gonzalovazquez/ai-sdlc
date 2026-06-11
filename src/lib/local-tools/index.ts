@@ -7,10 +7,9 @@ export function getLocalToolsForAgent(agentName: string): DynamicStructuredTool[
 
   switch (agentName) {
     case "code_agent":
-      // The code agent needs file system access to write the repository contents,
-      // and basic Git access to push files to a non-main branch.
+      // The code agent writes files to the workspace. The GitHub push happens
+      // deterministically in the node afterwards, not via model tool calls.
       tools.push(...LOCAL_FS_TOOLS);
-      tools.push(githubCreateBranchTool, githubCommitFilesTool);
       break;
     
     case "release_agent":

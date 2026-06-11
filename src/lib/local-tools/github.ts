@@ -1,3 +1,5 @@
+import * as fsp from "node:fs/promises";
+import * as nodePath from "node:path";
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { Octokit } from "@octokit/rest";
 import { z } from "zod";
@@ -191,3 +193,140 @@ export const LOCAL_GITHUB_TOOLS = [
   githubCommitFilesTool,
   githubCreatePrTool,
 ];
+
+export function isGitHubConfigured(): boolean {
+  return Boolean(
+    process.env.GITHUB_TOKEN && process.env.GITHUB_OWNER && process.env.GITHUB_REPO
+  );
+}
+
+const PUSH_EXCLUDED_DIRS = new Set(["node_modules", ".next", ".git"]);
+
+async function collectFiles(
+  dir: string,
+  base: string
+): Promise<{ path: string; contentBase64: string }[]> {
+  const entries = await fsp.readdir(dir, { withFileTypes: true });
+  const files: { path: string; contentBase64: string }[] = [];
+
+  for (const entry of entries) {
+    if (PUSH_EXCLUDED_DIRS.has(entry.name)) continue;
+    const full = nodePath.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...(await collectFiles(full, base)));
+    } else if (entry.isFile()) {
+      const content = await fsp.readFile(full);
+      files.push({
+        path: nodePath.relative(base, full).split(nodePath.sep).join("/"),
+        contentBase64: content.toString("base64"),
+      });
+    }
+  }
+
+  return files;
+}
+
+/**
+ * Deterministically push the contents of a local directory to a new branch
+ * (forked from the base branch). Used as a guaranteed post-step after the
+ * Code agent, since local models don't reliably call the GitHub tools.
+ *
+ * Files are uploaded as base64 blobs so binaries (e.g. favicon.ico) survive.
+ * If the requested branch already exists, a short unique suffix is appended.
+ */
+export async function pushDirectoryToBranch(
+  dir: string,
+  branchName: string,
+  commitMessage: string,
+  baseBranch = "main"
+): Promise<{ branch: string; commitSha: string; files: string[] }> {
+  const octokit = getOctokit();
+  const { owner, repo } = getRepoConfig();
+  const cleanBranch = branchName.replace(/^refs\/heads\//, "");
+
+  const files = await collectFiles(dir, dir);
+  if (files.length === 0) {
+    throw new Error(`No files found in ${dir} to push.`);
+  }
+
+  const baseRef = await octokit.rest.git.getRef({
+    owner,
+    repo,
+    ref: `heads/${baseBranch}`,
+  });
+  const baseSha = baseRef.data.object.sha;
+
+  let branch = cleanBranch;
+  try {
+    await octokit.rest.git.createRef({
+      owner,
+      repo,
+      ref: `refs/heads/${branch}`,
+      sha: baseSha,
+    });
+  } catch {
+    branch = `${cleanBranch}-${Date.now().toString(36)}`;
+    await octokit.rest.git.createRef({
+      owner,
+      repo,
+      ref: `refs/heads/${branch}`,
+      sha: baseSha,
+    });
+  }
+
+  const baseCommit = await octokit.rest.git.getCommit({
+    owner,
+    repo,
+    commit_sha: baseSha,
+  });
+
+  const treeItems = await Promise.all(
+    files.map(async (file) => {
+      const blob = await octokit.rest.git.createBlob({
+        owner,
+        repo,
+        content: file.contentBase64,
+        encoding: "base64",
+      });
+      return {
+        path: file.path,
+        mode: "100644" as const,
+        type: "blob" as const,
+        sha: blob.data.sha,
+      };
+    })
+  );
+
+  const tree = await octokit.rest.git.createTree({
+    owner,
+    repo,
+    base_tree: baseCommit.data.tree.sha,
+    tree: treeItems,
+  });
+
+  const commit = await octokit.rest.git.createCommit({
+    owner,
+    repo,
+    message: commitMessage,
+    tree: tree.data.sha,
+    parents: [baseSha],
+  });
+
+  await octokit.rest.git.updateRef({
+    owner,
+    repo,
+    ref: `heads/${branch}`,
+    sha: commit.data.sha,
+  });
+
+  log.info(
+    { branch, fileCount: files.length, commit: commit.data.sha },
+    "Pushed workspace to GitHub branch"
+  );
+
+  return {
+    branch,
+    commitSha: commit.data.sha,
+    files: files.map((f) => f.path),
+  };
+}
