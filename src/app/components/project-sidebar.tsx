@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useProjects } from "../context/projects-context";
 import { useFlowMode, type FlowMode } from "../context/flow-mode-context";
 import { ProjectSidebarItem } from "./project-sidebar-item";
 import { SettingToggle } from "./setting-toggle";
+import { EnvKeysDialog } from "./env-keys-dialog";
 
 interface ProjectSidebarProps {
   onNewProject: () => void;
@@ -14,6 +15,7 @@ export function ProjectSidebar({ onNewProject }: ProjectSidebarProps) {
   const { projects, activeProjectId, streamStates, setActiveProject } =
     useProjects();
   const { setFlow } = useFlowMode();
+  const [showEnvKeys, setShowEnvKeys] = useState(false);
 
   const handleFlowChange = useCallback(
     (value: string) => setFlow(value as FlowMode),
@@ -86,7 +88,17 @@ export function ProjectSidebar({ onNewProject }: ProjectSidebarProps) {
             { value: "anthropic", label: "Anthropic" },
           ]}
         />
+        <div className="px-3 py-2">
+          <button
+            onClick={() => setShowEnvKeys(true)}
+            className="w-full px-2 py-1.5 rounded-lg text-xs font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-200/60 dark:bg-zinc-800 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+          >
+            🔑 Environment Keys
+          </button>
+        </div>
       </div>
+
+      <EnvKeysDialog open={showEnvKeys} onClose={() => setShowEnvKeys(false)} />
     </aside>
   );
 }

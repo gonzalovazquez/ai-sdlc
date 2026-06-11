@@ -55,6 +55,17 @@ export function getOllamaModel(): ChatOllama {
   return _ollama;
 }
 
+/**
+ * Drop cached clients so the next call re-reads process.env. Called when
+ * runtime env keys change (e.g. the user sets ANTHROPIC_API_KEY in the UI).
+ */
+export function resetLLMClients(): void {
+  _opus = null;
+  _sonnet = null;
+  _ollama = null;
+  _demoAnthropic = null;
+}
+
 export type DemoProvider = "ollama" | "anthropic";
 
 // Runtime override set from the UI. Kept on globalThis so all route bundles
