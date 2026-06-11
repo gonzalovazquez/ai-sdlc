@@ -20,6 +20,19 @@ services:
       retries: 5
 
   # ---------------------------------------------------------------------------
+  # Observability — OTel Collector + Tempo (traces) + Loki (logs) + Grafana,
+  # all in one image. Grafana UI: http://localhost:3001 (anonymous admin).
+  # OTLP ports are published so `npm run dev` on the host can export too.
+  # ---------------------------------------------------------------------------
+  otel-lgtm:
+    image: grafana/otel-lgtm:latest
+    restart: unless-stopped
+    ports:
+      - "3001:3000" # Grafana UI (app owns 3000)
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+
+  # ---------------------------------------------------------------------------
   # SDLC AI — Next.js application
   # ---------------------------------------------------------------------------
   app:
@@ -70,6 +83,10 @@ services:
       # Monitoring (optional)
       SENTRY_DSN: ${SENTRY_DSN:-}
       FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-}
+
+      # OpenTelemetry — traces + logs to the otel-lgtm service
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-lgtm:4318}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-sdlc-ai}
 
 volumes:
   pgdata:

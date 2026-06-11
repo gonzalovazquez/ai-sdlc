@@ -2,17 +2,18 @@ import { END, START, StateGraph } from "@langchain/langgraph";
 import { SDLCState, type SDLCStateType } from "./state";
 import { pmAgentNode, architectAgentNode, codeAgentNode, humanReviewNode, scaffoldNode } from "../agents";
 import { getCheckpointer, ensureCheckpointerReady } from "./checkpointer";
+import { traced } from "../telemetry";
 
 // Simplified linear demo flow: PM → Architect → Human Review → Scaffold → Code → END
 // Scaffold runs after the review gate so rejected plans never trigger it.
 
 function buildDemoGraph() {
   const graph = new StateGraph(SDLCState)
-    .addNode("pm_agent", pmAgentNode)
-    .addNode("architect_agent", architectAgentNode)
-    .addNode("human_review", humanReviewNode)
-    .addNode("scaffold", scaffoldNode)
-    .addNode("code_agent", codeAgentNode)
+    .addNode("pm_agent", traced("pm_agent", pmAgentNode))
+    .addNode("architect_agent", traced("architect_agent", architectAgentNode))
+    .addNode("human_review", traced("human_review", humanReviewNode))
+    .addNode("scaffold", traced("scaffold", scaffoldNode))
+    .addNode("code_agent", traced("code_agent", codeAgentNode))
 
     .addEdge(START, "pm_agent")
     .addEdge("pm_agent", "architect_agent")

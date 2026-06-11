@@ -160,6 +160,26 @@ docker compose up --build
 
 The app will be available at [http://localhost:3000](http://localhost:3000).
 
+## Observability (OpenTelemetry)
+
+Every graph node execution is wrapped in an OpenTelemetry span (`src/lib/telemetry.ts`),
+so a full SDLC run renders as a single trace whose waterfall mirrors the graph — including
+the parallel Design/Infra fork and the QA→Code retry loop. Pino log lines are tagged with
+the active `trace_id`/`span_id` and shipped alongside the traces, so you can jump from any
+span straight to the logs it produced.
+
+Everything exports over OTLP to [grafana/otel-lgtm](https://github.com/grafana/docker-otel-lgtm)
+(OTel Collector + Tempo + Loki + Grafana in one container):
+
+```bash
+docker compose up otel-lgtm -d
+```
+
+Then open Grafana at [http://localhost:3001](http://localhost:3001) (anonymous admin login)
+and explore the **Tempo** (traces) and **Loki** (logs) data sources. In dev, the app exports
+to `localhost:4318` automatically; under Docker Compose the app container is pointed at the
+`otel-lgtm` service. If no backend is running, telemetry is a no-op.
+
 ## Scripts
 
 | Command | Description |

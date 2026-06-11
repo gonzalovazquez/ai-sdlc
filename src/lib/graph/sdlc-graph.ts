@@ -12,6 +12,7 @@ import {
   humanReviewNode,
 } from "../agents";
 import { getCheckpointer, ensureCheckpointerReady } from "./checkpointer";
+import { traced } from "../telemetry";
 
 // ---------------------------------------------------------------------------
 // Conditional routing functions
@@ -56,16 +57,16 @@ function routeAfterQA(state: SDLCStateType): string {
 
 function buildGraph() {
   const graph = new StateGraph(SDLCState)
-    // ---- Agent nodes ----
-    .addNode("pm_agent", pmAgentNode)
-    .addNode("architect_agent", architectAgentNode)
-    .addNode("design_agent", designAgentNode)
-    .addNode("infra_agent", infraAgentNode)
-    .addNode("code_agent", codeAgentNode)
-    .addNode("qa_agent", qaAgentNode)
-    .addNode("release_agent", releaseAgentNode)
-    .addNode("monitor_agent", monitorAgentNode)
-    .addNode("human_review", humanReviewNode)
+    // ---- Agent nodes (traced → one OTel span per node execution) ----
+    .addNode("pm_agent", traced("pm_agent", pmAgentNode))
+    .addNode("architect_agent", traced("architect_agent", architectAgentNode))
+    .addNode("design_agent", traced("design_agent", designAgentNode))
+    .addNode("infra_agent", traced("infra_agent", infraAgentNode))
+    .addNode("code_agent", traced("code_agent", codeAgentNode))
+    .addNode("qa_agent", traced("qa_agent", qaAgentNode))
+    .addNode("release_agent", traced("release_agent", releaseAgentNode))
+    .addNode("monitor_agent", traced("monitor_agent", monitorAgentNode))
+    .addNode("human_review", traced("human_review", humanReviewNode))
 
     // ---- Edges ----
     // Entry: user message → PM agent
