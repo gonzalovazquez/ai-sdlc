@@ -1,6 +1,8 @@
 "use client";
 
-const PHASES = [
+import { useFlowMode, type FlowMode } from "../context/flow-mode-context";
+
+const SIMPLIFIED_PHASES = [
   { id: "intake", label: "Intake", icon: "📋" },
   { id: "requirements", label: "Requirements", icon: "📝" },
   { id: "architecture", label: "Architecture", icon: "🏗" },
@@ -8,11 +10,33 @@ const PHASES = [
   { id: "implementation", label: "Implementation", icon: "⚙" },
 ];
 
+// Mirrors sdlc-graph.ts: the parallel design/infra fork is shown as two
+// consecutive steps, so whichever finishes second marks both as passed.
+const FULL_PHASES = [
+  { id: "intake", label: "Intake", icon: "📋" },
+  { id: "requirements", label: "Requirements", icon: "📝" },
+  { id: "architecture", label: "Architecture", icon: "🏗" },
+  { id: "design", label: "Design", icon: "🎨" },
+  { id: "infrastructure", label: "Infrastructure", icon: "☁️" },
+  { id: "review", label: "Review", icon: "👁" },
+  { id: "implementation", label: "Implementation", icon: "⚙" },
+  { id: "qa", label: "QA", icon: "🧪" },
+  { id: "release", label: "Release", icon: "🚀" },
+  { id: "monitoring", label: "Monitoring", icon: "📈" },
+];
+
+const PHASES_BY_FLOW: Record<FlowMode, typeof SIMPLIFIED_PHASES> = {
+  simplified: SIMPLIFIED_PHASES,
+  full: FULL_PHASES,
+};
+
 interface PhaseTrackerProps {
   currentPhase: string;
 }
 
 export function PhaseTracker({ currentPhase }: PhaseTrackerProps) {
+  const { flow } = useFlowMode();
+  const PHASES = PHASES_BY_FLOW[flow];
   const currentIdx = PHASES.findIndex((p) => p.id === currentPhase);
 
   return (

@@ -1,6 +1,8 @@
 "use client";
 
+import { useCallback } from "react";
 import { useProjects } from "../context/projects-context";
+import { useFlowMode, type FlowMode } from "../context/flow-mode-context";
 import { ProjectSidebarItem } from "./project-sidebar-item";
 import { SettingToggle } from "./setting-toggle";
 
@@ -11,6 +13,12 @@ interface ProjectSidebarProps {
 export function ProjectSidebar({ onNewProject }: ProjectSidebarProps) {
   const { projects, activeProjectId, streamStates, setActiveProject } =
     useProjects();
+  const { setFlow } = useFlowMode();
+
+  const handleFlowChange = useCallback(
+    (value: string) => setFlow(value as FlowMode),
+    [setFlow]
+  );
 
   const attentionCount = projects.filter(
     (p) => streamStates[p.id]?.awaitingApproval && p.id !== activeProjectId
@@ -67,6 +75,7 @@ export function ProjectSidebar({ onNewProject }: ProjectSidebarProps) {
             { value: "simplified", label: "Simplified" },
             { value: "full", label: "Full" },
           ]}
+          onValueChange={handleFlowChange}
         />
         <SettingToggle
           label="LLM Provider"

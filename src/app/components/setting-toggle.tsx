@@ -9,9 +9,17 @@ interface SettingToggleProps {
   /** JSON field holding the value in requests and responses. */
   field: string;
   options: { value: string; label: string }[];
+  /** Notified whenever the persisted value changes (initial load, select, revert). */
+  onValueChange?: (value: string) => void;
 }
 
-export function SettingToggle({ label, endpoint, field, options }: SettingToggleProps) {
+export function SettingToggle({
+  label,
+  endpoint,
+  field,
+  options,
+  onValueChange,
+}: SettingToggleProps) {
   const [value, setValue] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -21,6 +29,10 @@ export function SettingToggle({ label, endpoint, field, options }: SettingToggle
       .then((data) => setValue(data[field]))
       .catch(() => setValue(null));
   }, [endpoint, field]);
+
+  useEffect(() => {
+    if (value !== null) onValueChange?.(value);
+  }, [value, onValueChange]);
 
   const handleSelect = async (next: string) => {
     if (value === null || next === value || saving) return;

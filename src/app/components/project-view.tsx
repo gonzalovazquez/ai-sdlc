@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useProjects } from "../context/projects-context";
+import { useFlowMode } from "../context/flow-mode-context";
 import { PhaseTracker } from "./phase-tracker";
 import { ChatMessage } from "./chat-message";
 import { ApprovalPanel } from "./approval-panel";
@@ -19,6 +20,7 @@ export function ProjectView({ onNewProject }: ProjectViewProps) {
     approve,
   } = useProjects();
 
+  const { flow } = useFlowMode();
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -59,10 +61,12 @@ export function ProjectView({ onNewProject }: ProjectViewProps) {
       <div className="flex flex-col items-center justify-center h-full text-center px-6">
         <div className="text-5xl mb-4">🤖</div>
         <h2 className="text-xl font-semibold mb-2">
-          SDLC Demo — Simplified Flow
+          SDLC Demo — {flow === "full" ? "Full Flow" : "Simplified Flow"}
         </h2>
         <p className="text-zinc-500 max-w-md mb-6">
-          A 4-step AI pipeline: Requirements → Architecture → Human Review → Code generation. Create a project to begin.
+          {flow === "full"
+            ? "An 8-agent AI pipeline: Requirements → Architecture → Design + Infrastructure → Human Review → Code → QA → Release → Monitoring. Create a project to begin."
+            : "A 4-step AI pipeline: Requirements → Architecture → Human Review → Code generation. Create a project to begin."}
         </p>
         <button
           onClick={onNewProject}
