@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDemoGraph } from "@/lib/graph";
+import { getActiveGraph } from "@/lib/graph";
 
 /**
  * GET /api/history?threadId=xxx
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const graph = getDemoGraph();
+    const graph = getActiveGraph();
     const state = await graph.getState({
       configurable: { thread_id: threadId },
     });

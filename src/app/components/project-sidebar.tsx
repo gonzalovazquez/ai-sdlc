@@ -2,7 +2,7 @@
 
 import { useProjects } from "../context/projects-context";
 import { ProjectSidebarItem } from "./project-sidebar-item";
-import { ProviderToggle } from "./provider-toggle";
+import { SettingToggle } from "./setting-toggle";
 
 interface ProjectSidebarProps {
   onNewProject: () => void;
@@ -58,7 +58,26 @@ export function ProjectSidebar({ onNewProject }: ProjectSidebarProps) {
         </div>
       )}
 
-      <ProviderToggle />
+      <div className="border-t border-zinc-200 dark:border-zinc-800 py-1">
+        <SettingToggle
+          label="Pipeline"
+          endpoint="/api/settings/flow"
+          field="flow"
+          options={[
+            { value: "simplified", label: "Simplified" },
+            { value: "full", label: "Full" },
+          ]}
+        />
+        <SettingToggle
+          label="LLM Provider"
+          endpoint="/api/settings/provider"
+          field="provider"
+          options={[
+            { value: "ollama", label: "Local" },
+            { value: "anthropic", label: "Anthropic" },
+          ]}
+        />
+      </div>
     </aside>
   );
 }

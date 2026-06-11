@@ -1,5 +1,5 @@
 import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { getSonnetModel } from "../llm";
+import { getDemoModel } from "../llm";
 import { agentLogger } from "../logger";
 import { getLocalToolsForAgent } from "../local-tools";
 import { invokeWithTools } from "./invoke-with-tools";
@@ -58,7 +58,7 @@ Infra state: ${JSON.stringify(state.infraState, null, 2)}`;
   log.info({ toolCount: localTools.length }, "Loaded local tools");
 
   const response = await invokeWithTools(
-    getSonnetModel(),
+    getDemoModel(),
     [
       new SystemMessage(SYSTEM_PROMPT),
       ...state.messages,

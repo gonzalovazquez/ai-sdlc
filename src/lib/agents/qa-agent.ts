@@ -1,5 +1,5 @@
 import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { getSonnetModel } from "../llm";
+import { getDemoModel } from "../llm";
 import { agentLogger } from "../logger";
 import type { SDLCStateType } from "../graph/state";
 
@@ -61,7 +61,7 @@ ${state.codeArtifacts?.files.map((f) => `--- ${f.path} ---\n${f.content}`).join(
   log.info({ fileCount: state.codeArtifacts?.files.length ?? 0 }, "Starting QA review");
   const start = Date.now();
 
-  const response = await getSonnetModel().invoke([
+  const response = await getDemoModel().invoke([
     new SystemMessage(SYSTEM_PROMPT),
     ...state.messages,
     new HumanMessage(`[Context]\n${contextMessage}`),

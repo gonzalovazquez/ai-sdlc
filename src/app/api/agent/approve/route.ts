@@ -1,6 +1,10 @@
 import { NextRequest } from "next/server";
 import { HumanMessage } from "@langchain/core/messages";
-import { getDemoGraph, ensureDemoGraphReady } from "@/lib/graph";
+import {
+  getActiveGraph,
+  ensureActiveGraphReady,
+  getRejectionResumeNode,
+} from "@/lib/graph";
 
 export const runtime = "nodejs";
 
@@ -20,8 +24,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  await ensureDemoGraphReady();
-  const graph = getDemoGraph();
+  await ensureActiveGraphReady();
+  const graph = getActiveGraph();
   const config = { configurable: { thread_id: threadId } };
 
   try {
@@ -38,9 +42,10 @@ export async function POST(req: NextRequest) {
         ],
       });
     } else {
-      // Rejected — send feedback and loop back to architect.
-      // Attribute the update to pm_agent so the next node to execute is
-      // architect_agent (asNode marks the node as already run).
+      // Rejected — send feedback and re-run the planning section. The asNode
+      // attribution marks that node as already run, so the graph resumes at
+      // its successors: architect_agent on the simplified flow, the
+      // Design/Infra fork on the full flow.
       await graph.updateState(
         config,
         {
@@ -51,7 +56,7 @@ export async function POST(req: NextRequest) {
             ),
           ],
         },
-        "pm_agent"
+        getRejectionResumeNode()
       );
     }
 
