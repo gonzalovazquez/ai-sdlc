@@ -1,5 +1,5 @@
 import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { getSonnetModel } from "../llm";
+import { getDemoModel } from "../llm";
 import { agentLogger } from "../logger";
 import { getToolsForAgent } from "../mcp/tools";
 import { invokeWithTools } from "./invoke-with-tools";
@@ -52,7 +52,7 @@ Architecture decisions: ${JSON.stringify(state.architectureDecisions, null, 2)}`
   log.info({ toolCount: tools.length }, "Loaded MCP tools");
 
   const response = await invokeWithTools(
-    getSonnetModel(),
+    getDemoModel(),
     [
       new SystemMessage(SYSTEM_PROMPT),
       ...state.messages,

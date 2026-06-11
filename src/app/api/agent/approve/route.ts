@@ -1,6 +1,10 @@
 import { NextRequest } from "next/server";
 import { HumanMessage } from "@langchain/core/messages";
-import { getSDLCGraph, ensureGraphReady } from "@/lib/graph";
+import {
+  getActiveGraph,
+  ensureActiveGraphReady,
+  getRejectionResumeNode,
+} from "@/lib/graph";
 
 export const runtime = "nodejs";
 
@@ -20,8 +24,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  await ensureGraphReady();
-  const graph = getSDLCGraph();
+  await ensureActiveGraphReady();
+  const graph = getActiveGraph();
   const config = { configurable: { thread_id: threadId } };
 
   try {
@@ -38,7 +42,10 @@ export async function POST(req: NextRequest) {
         ],
       });
     } else {
-      // Rejected — send feedback and loop back to architect
+      // Rejected — send feedback and re-run the planning section. The asNode
+      // attribution marks that node as already run, so the graph resumes at
+      // its successors: architect_agent on the simplified flow, the
+      // Design/Infra fork on the full flow.
       await graph.updateState(
         config,
         {
@@ -49,8 +56,7 @@ export async function POST(req: NextRequest) {
             ),
           ],
         },
-        // Resume from architect to re-do decisions
-        "architect_agent"
+        getRejectionResumeNode()
       );
     }
 

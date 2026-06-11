@@ -7,3 +7,4 @@ export { qaAgentNode } from "./qa-agent";
 export { releaseAgentNode } from "./release-agent";
 export { monitorAgentNode } from "./monitor-agent";
 export { humanReviewNode } from "./human-review";
+export { scaffoldNode } from "./scaffold-node";

@@ -18,4 +18,13 @@ export {
   routeAfterArchitect,
   routeAfterQA,
 } from "./sdlc-graph";
+export { getDemoGraph, ensureDemoGraphReady, buildDemoGraph } from "./demo-graph";
+export {
+  getActiveGraph,
+  ensureActiveGraphReady,
+  getFlowMode,
+  setFlowMode,
+  getRejectionResumeNode,
+  type FlowMode,
+} from "./active";
 export { getCheckpointer, ensureCheckpointerReady } from "./checkpointer";

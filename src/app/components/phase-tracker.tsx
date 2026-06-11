@@ -4,13 +4,8 @@ const PHASES = [
   { id: "intake", label: "Intake", icon: "📋" },
   { id: "requirements", label: "Requirements", icon: "📝" },
   { id: "architecture", label: "Architecture", icon: "🏗" },
-  { id: "design", label: "Design", icon: "🎨" },
-  { id: "infrastructure", label: "Infrastructure", icon: "☁" },
   { id: "review", label: "Review", icon: "👁" },
   { id: "implementation", label: "Implementation", icon: "⚙" },
-  { id: "qa", label: "QA", icon: "✓" },
-  { id: "release", label: "Release", icon: "🚀" },
-  { id: "monitoring", label: "Monitoring", icon: "📊" },
 ];
 
 interface PhaseTrackerProps {

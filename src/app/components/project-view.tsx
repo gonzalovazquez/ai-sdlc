@@ -59,11 +59,10 @@ export function ProjectView({ onNewProject }: ProjectViewProps) {
       <div className="flex flex-col items-center justify-center h-full text-center px-6">
         <div className="text-5xl mb-4">🤖</div>
         <h2 className="text-xl font-semibold mb-2">
-          Agentic Development Environment
+          SDLC Demo — Simplified Flow
         </h2>
         <p className="text-zinc-500 max-w-md mb-6">
-          AI-native SDLC with 8 specialist agents orchestrated by LangGraph.
-          Create a project to begin the pipeline.
+          A 4-step AI pipeline: Requirements → Architecture → Human Review → Code generation. Create a project to begin.
         </p>
         <button
           onClick={onNewProject}

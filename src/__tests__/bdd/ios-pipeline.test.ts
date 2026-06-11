@@ -13,9 +13,15 @@ import type { SDLCStateType } from "@/lib/graph/state";
 // Mock LLM to return controlled responses per agent
 vi.mock("@/lib/llm", () => {
   const mockInvoke = vi.fn();
+  const mockModel = {
+    invoke: mockInvoke,
+    bindTools: () => ({ invoke: mockInvoke }),
+  };
   return {
-    getSonnetModel: () => ({ invoke: mockInvoke }),
-    getOpusModel: () => ({ invoke: mockInvoke }),
+    getSonnetModel: () => mockModel,
+    getOpusModel: () => mockModel,
+    getOllamaModel: () => mockModel,
+    getDemoModel: () => mockModel,
     __mockInvoke: mockInvoke,
   };
 });

@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "notion-mcp": "sh scripts/notion-mcp.sh",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -20,6 +21,7 @@
     "@langchain/core": "^1.1.36",
     "@langchain/langgraph": "^1.2.5",
     "@langchain/langgraph-checkpoint-postgres": "^1.0.1",
+    "@langchain/ollama": "^1.1.0",
     "@modelcontextprotocol/sdk": "^1.28.0",
     "@octokit/rest": "^22.0.1",
     "@tailwindcss/typography": "^0.5.19",
@@ -33,6 +35,7 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "@notionhq/notion-mcp-server": "^2.2.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

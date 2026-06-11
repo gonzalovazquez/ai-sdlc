@@ -6,8 +6,12 @@ import { logger } from "../logger";
 
 const log = logger.child({ module: "mcp-local-fs" });
 
-// We require paths to be resolved relative to the actual project root.
-const WORKSPACE_DIR = process.cwd();
+// Generated code is confined to a workspace directory. It must NOT default to
+// the app's own root: generated files like app/page.tsx would be picked up by
+// the running Next.js dev server and break its routing.
+export const WORKSPACE_DIR = path.resolve(
+  process.env.WORKSPACE_DIR ?? path.join(process.cwd(), "workspace")
+);
 
 function resolveSafePath(userPath: string): string {
   const resolved = path.resolve(WORKSPACE_DIR, userPath);
