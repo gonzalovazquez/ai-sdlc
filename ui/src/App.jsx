@@ -745,7 +745,7 @@ function ThankYouSection() {
             Modern Applications | RBC
           </div>
           <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 13, color: COLORS.tealBright, marginBottom: 28 }}>
-            github.com/usmakestwo
+            github.com/gonzalovazquez
           </div>
           <div style={{
             fontFamily: "'JetBrains Mono'", fontSize: 11, color: COLORS.gray,
