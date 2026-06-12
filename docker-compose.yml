@@ -44,6 +44,10 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
+    volumes:
+      # Generated workspaces land on the host (same path as `npm run dev`
+      # runs) and survive `docker compose down`.
+      - ./workspace:/app/workspace
     depends_on:
       postgres:
         condition: service_healthy
