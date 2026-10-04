@@ -66,11 +66,17 @@ async function invokeWithClaudeCode(params: InvokeAgentParams): Promise<AIMessag
   // Resolve the claude binary: prefer CLAUDE_BIN env override, then PATH
   const claudeBin = process.env.CLAUDE_BIN ?? "claude";
 
+  // Pre-grant the tools the agent will need so no interactive prompt fires.
+  // --allowed-tools works without the enterprise opt-in that
+  // --dangerously-skip-permissions requires.
+  const allowedTools = process.env.CLAUDE_ALLOWED_TOOLS ?? "Write Edit Bash";
+
   const args = [
     "--print",
     "--output-format", "json",
     "--model", model,
     "--system-prompt", systemPrompt,
+    "--allowed-tools", allowedTools,
     "--dangerously-skip-permissions",
   ];
 
