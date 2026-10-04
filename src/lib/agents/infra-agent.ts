@@ -1,8 +1,6 @@
-import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { getDemoModel } from "../llm";
+import { AIMessage } from "@langchain/core/messages";
 import { agentLogger } from "../logger";
-import { getToolsForAgent } from "../mcp/tools";
-import { invokeWithTools } from "./invoke-with-tools";
+import { invokeAgent } from "./invoke-agent";
 import type { SDLCStateType } from "../graph/state";
 
 const log = agentLogger("infra_agent");
@@ -48,18 +46,13 @@ Architecture decisions: ${JSON.stringify(state.architectureDecisions, null, 2)}`
   log.info("Starting infrastructure planning");
   const start = Date.now();
 
-  const tools = await getToolsForAgent("infra_agent");
-  log.info({ toolCount: tools.length }, "Loaded MCP tools");
-
-  const response = await invokeWithTools(
-    getDemoModel(),
-    [
-      new SystemMessage(SYSTEM_PROMPT),
-      ...state.messages,
-      new HumanMessage(`[Context]\n${contextMessage}`),
-    ],
-    tools
-  );
+  const response = await invokeAgent({
+    agentName: "infra_agent",
+    systemPrompt: SYSTEM_PROMPT,
+    messages: state.messages,
+    contextMessage,
+    model: "claude-sonnet-4-6",
+  });
 
   const elapsed = Date.now() - start;
 

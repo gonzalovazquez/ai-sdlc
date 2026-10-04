@@ -3,13 +3,14 @@ import { promisify } from "node:util";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { getDemoModel } from "../llm";
 import { agentLogger } from "../logger";
+import { getDemoProvider, getOllamaModel } from "../llm";
 import { getToolsForAgent } from "../mcp/tools";
 import { getLocalToolsForAgent } from "../local-tools";
 import { WORKSPACE_DIR } from "../local-tools/fs";
 import { isGitHubConfigured, pushDirectoryToBranch } from "../local-tools/github";
 import { invokeWithTools } from "./invoke-with-tools";
+import { invokeAgent } from "./invoke-agent";
 import type { SDLCStateType } from "../graph/state";
 
 const log = agentLogger("code_agent");
@@ -145,41 +146,55 @@ QA feedback (if any): ${JSON.stringify(state.qaResults, null, 2)}`;
   log.info({ platform: state.projectConfig.platform }, "Starting code generation");
   const start = Date.now();
 
-  const mcpTools = await getToolsForAgent("code_agent");
-  const localTools = getLocalToolsForAgent("code_agent");
-  const tools = [...mcpTools, ...localTools];
-  log.info({ toolCount: tools.length }, "Loaded MCP and local tools");
+  let response: AIMessage;
 
-  const conversation = [
-    new SystemMessage(SYSTEM_PROMPT),
-    ...state.messages,
-    new HumanMessage(`[Context]\n${contextMessage}`),
-  ];
+  if (getDemoProvider() === "ollama") {
+    // Ollama path: manual tool loop + post-generation typecheck repair
+    const mcpTools = await getToolsForAgent("code_agent");
+    const localTools = getLocalToolsForAgent("code_agent");
+    const tools = [...mcpTools, ...localTools];
+    log.info({ toolCount: tools.length }, "Loaded MCP and local tools (Ollama)");
 
-  let response = await invokeWithTools(getDemoModel(), conversation, tools);
+    const conversation = [
+      new SystemMessage(SYSTEM_PROMPT),
+      ...state.messages,
+      new HumanMessage(`[Context]\n${contextMessage}`),
+    ];
 
-  // Verify-and-repair: type-check the workspace and feed compiler errors back
-  // for a bounded number of fix rounds. Proceeds regardless after the cap.
-  if (state.projectConfig.platform !== "ios") {
-    for (let round = 0; round <= MAX_REPAIR_ROUNDS; round++) {
-      const errors = await typecheckWorkspace();
-      if (!errors) {
-        log.info({ repairRounds: round }, "Workspace type-check passed");
-        break;
+    response = await invokeWithTools(getOllamaModel(), conversation, tools);
+
+    if (state.projectConfig.platform !== "ios") {
+      for (let round = 0; round <= MAX_REPAIR_ROUNDS; round++) {
+        const errors = await typecheckWorkspace();
+        if (!errors) {
+          log.info({ repairRounds: round }, "Workspace type-check passed");
+          break;
+        }
+        if (round === MAX_REPAIR_ROUNDS) {
+          log.warn({ errors: errors.slice(0, 500) }, "Type-check still failing after final repair — proceeding");
+          break;
+        }
+        log.warn({ round: round + 1, errors: errors.slice(0, 500) }, "Type-check failed — requesting repair");
+        conversation.push(response);
+        conversation.push(
+          new HumanMessage(
+            `The generated workspace fails TypeScript compilation. Fix ALL of these errors by rewriting the affected files in full with fs_write_file. Remember: imports must match real files and exports, no packages outside the scaffold, no JSX outside .tsx files, lib/ stays plain TypeScript:\n\n${errors.slice(0, 4000)}`
+          )
+        );
+        response = await invokeWithTools(getOllamaModel(), conversation, tools);
       }
-      if (round === MAX_REPAIR_ROUNDS) {
-        log.warn({ errors: errors.slice(0, 500) }, "Type-check still failing after final repair — proceeding");
-        break;
-      }
-      log.warn({ round: round + 1, errors: errors.slice(0, 500) }, "Type-check failed — requesting repair");
-      conversation.push(response);
-      conversation.push(
-        new HumanMessage(
-          `The generated workspace fails TypeScript compilation. Fix ALL of these errors by rewriting the affected files in full with fs_write_file. Remember: imports must match real files and exports, no packages outside the scaffold, no JSX outside .tsx files, lib/ stays plain TypeScript:\n\n${errors.slice(0, 4000)}`
-        )
-      );
-      response = await invokeWithTools(getDemoModel(), conversation, tools);
     }
+  } else {
+    // Claude Code SDK path: native file tools + built-in multi-turn correction
+    log.info({ cwd: WORKSPACE_DIR }, "Invoking code_agent via Claude Code SDK");
+    response = await invokeAgent({
+      agentName: "code_agent",
+      systemPrompt: SYSTEM_PROMPT,
+      messages: state.messages,
+      contextMessage,
+      model: "claude-opus-4-6",
+      cwd: WORKSPACE_DIR,
+    });
   }
 
   const elapsed = Date.now() - start;

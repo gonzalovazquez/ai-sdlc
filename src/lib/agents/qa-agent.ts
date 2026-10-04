@@ -1,6 +1,6 @@
-import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { getDemoModel } from "../llm";
+import { AIMessage } from "@langchain/core/messages";
 import { agentLogger } from "../logger";
+import { invokeAgent } from "./invoke-agent";
 import type { SDLCStateType } from "../graph/state";
 
 const log = agentLogger("qa_agent");
@@ -61,11 +61,13 @@ ${state.codeArtifacts?.files.map((f) => `--- ${f.path} ---\n${f.content}`).join(
   log.info({ fileCount: state.codeArtifacts?.files.length ?? 0 }, "Starting QA review");
   const start = Date.now();
 
-  const response = await getDemoModel().invoke([
-    new SystemMessage(SYSTEM_PROMPT),
-    ...state.messages,
-    new HumanMessage(`[Context]\n${contextMessage}`),
-  ]);
+  const response = await invokeAgent({
+    agentName: "qa_agent",
+    systemPrompt: SYSTEM_PROMPT,
+    messages: state.messages,
+    contextMessage,
+    model: "claude-sonnet-4-6",
+  });
 
   const elapsed = Date.now() - start;
 

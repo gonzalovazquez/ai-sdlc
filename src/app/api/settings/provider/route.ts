@@ -1,20 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDemoProvider, setDemoProvider, type DemoProvider } from "@/lib/llm";
 
-/**
- * GET /api/settings/provider
- *
- * Returns the currently active LLM provider for the demo agents.
- */
+const VALID_PROVIDERS: DemoProvider[] = ["ollama", "claude-code"];
+
 export async function GET() {
   return NextResponse.json({ provider: getDemoProvider() });
 }
 
-/**
- * PUT /api/settings/provider
- *
- * Switches the LLM provider at runtime. Body: { provider: "ollama" | "anthropic" }
- */
 export async function PUT(req: NextRequest) {
   let body: { provider?: string };
   try {
@@ -23,9 +15,9 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  if (body.provider !== "ollama" && body.provider !== "anthropic") {
+  if (!VALID_PROVIDERS.includes(body.provider as DemoProvider)) {
     return NextResponse.json(
-      { error: 'provider must be "ollama" or "anthropic"' },
+      { error: `provider must be one of: ${VALID_PROVIDERS.join(", ")}` },
       { status: 400 }
     );
   }

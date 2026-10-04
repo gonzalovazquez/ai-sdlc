@@ -1,8 +1,6 @@
-import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { getDemoModel } from "../llm";
+import { AIMessage } from "@langchain/core/messages";
 import { agentLogger } from "../logger";
-import { getLocalToolsForAgent } from "../local-tools";
-import { invokeWithTools } from "./invoke-with-tools";
+import { invokeAgent } from "./invoke-agent";
 import type { SDLCStateType } from "../graph/state";
 
 const log = agentLogger("release_agent");
@@ -54,18 +52,13 @@ Infra state: ${JSON.stringify(state.infraState, null, 2)}`;
   log.info({ branch: state.codeArtifacts?.branch }, "Starting release process");
   const start = Date.now();
 
-  const localTools = getLocalToolsForAgent("release_agent");
-  log.info({ toolCount: localTools.length }, "Loaded local tools");
-
-  const response = await invokeWithTools(
-    getDemoModel(),
-    [
-      new SystemMessage(SYSTEM_PROMPT),
-      ...state.messages,
-      new HumanMessage(`[Context]\n${contextMessage}`),
-    ],
-    localTools
-  );
+  const response = await invokeAgent({
+    agentName: "release_agent",
+    systemPrompt: SYSTEM_PROMPT,
+    messages: state.messages,
+    contextMessage,
+    model: "claude-sonnet-4-6",
+  });
 
   const elapsed = Date.now() - start;
 
