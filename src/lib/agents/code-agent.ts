@@ -49,7 +49,7 @@ async function typecheckWorkspace(): Promise<string | null> {
   }
 }
 
-const SYSTEM_PROMPT = `You are the Code Agent in an AI-native SDLC pipeline.
+const SYSTEM_PROMPT_BASE = `You are the Code Agent in an AI-native SDLC pipeline.
 
 You receive architecture decisions, design assets, and (optionally) infrastructure
 state, then generate implementation code.
@@ -103,10 +103,9 @@ Hard rules:
 - Ensure consistent data models
 
 ## Required Workflow — deliver code ONLY through tool calls, in this order:
-1. Call fs_write_file once per generated file to write it to disk. Paths are
-   relative to the workspace root (e.g. "app/page.tsx", "components/NoteList.tsx").
-   Write each file EXACTLY ONCE — never rewrite a file that was written
-   successfully. You may issue several fs_write_file calls in one turn.
+1. Write each file to disk. Paths are relative to your working directory
+   (e.g. "app/page.tsx"). Write each file EXACTLY ONCE — never rewrite a file
+   that was written successfully. You may write several files in one turn.
 2. When every planned file is written, STOP calling tools and write your final reply.
 
 Your final reply must contain:
@@ -123,6 +122,21 @@ Your final reply must contain:
     "branch": "feat/feature-name"
   }
 }`;
+
+// Ollama path: custom fs_write_file tool is in scope
+const SYSTEM_PROMPT_OLLAMA = SYSTEM_PROMPT_BASE.replace(
+  "Write each file to disk.",
+  "Call fs_write_file once per generated file to write it to disk."
+);
+
+// Claude Code subprocess path: native Write/Edit tools are in scope; permissions pre-granted
+const SYSTEM_PROMPT_CLAUDE_CODE =
+  SYSTEM_PROMPT_BASE +
+  `
+
+IMPORTANT: You have full write permission for this workspace — do NOT ask for
+permission, do NOT explain that you need it. Write every file immediately using
+your Write or Edit tools as soon as you have the content ready.`;
 
 export async function codeAgentNode(
   state: SDLCStateType
@@ -156,7 +170,7 @@ QA feedback (if any): ${JSON.stringify(state.qaResults, null, 2)}`;
     log.info({ toolCount: tools.length }, "Loaded MCP and local tools (Ollama)");
 
     const conversation = [
-      new SystemMessage(SYSTEM_PROMPT),
+      new SystemMessage(SYSTEM_PROMPT_OLLAMA),
       ...state.messages,
       new HumanMessage(`[Context]\n${contextMessage}`),
     ];
@@ -189,7 +203,7 @@ QA feedback (if any): ${JSON.stringify(state.qaResults, null, 2)}`;
     log.info({ cwd: WORKSPACE_DIR }, "Invoking code_agent via Claude Code SDK");
     response = await invokeAgent({
       agentName: "code_agent",
-      systemPrompt: SYSTEM_PROMPT,
+      systemPrompt: SYSTEM_PROMPT_CLAUDE_CODE,
       messages: state.messages,
       contextMessage,
       model: "claude-opus-4-6",
