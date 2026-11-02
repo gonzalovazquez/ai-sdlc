@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDemoProvider, setDemoProvider, type DemoProvider } from "@/lib/llm";
 
-const VALID_PROVIDERS: DemoProvider[] = ["ollama", "claude-code"];
+const VALID_PROVIDERS: DemoProvider[] = ["ollama", "anthropic"];
 
 export async function GET() {
   return NextResponse.json({ provider: getDemoProvider() });

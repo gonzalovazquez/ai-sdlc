@@ -42,20 +42,23 @@ cp .env.local.example .env.local
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `LLM_PROVIDER` | `claude-code` | `claude-code` — use the local `claude` CLI (no API key needed); `ollama` — use a local Ollama model |
+| `LLM_PROVIDER` | `anthropic` | `anthropic` — Claude API; `ollama` — local Ollama model. Can also be switched at runtime from the sidebar. |
 
-### Required (Ollama only)
-
-| Variable | Description |
-|----------|-------------|
-| `OLLAMA_BASE_URL` | Ollama server URL (default: `http://localhost:11434`) |
-| `OLLAMA_MODEL` | Model name to use (e.g. `llama3.1`) |
-
-### Required (Anthropic API only — not needed for Claude Code sessions)
+### Required (Claude API)
 
 | Variable | Description | How to get it |
 |----------|-------------|---------------|
 | `ANTHROPIC_API_KEY` | Claude API key | [console.anthropic.com](https://console.anthropic.com/) → API Keys |
+
+Optional: `ANTHROPIC_MODEL` forces one model for every agent, overriding the per-agent defaults in the [Architecture](#architecture) table.
+
+### Ollama only
+
+| Variable | Default |
+|----------|---------|
+| `OLLAMA_BASE_URL` | `http://localhost:11434` |
+| `OLLAMA_MODEL` | `qwen3.5:35b` |
+| `OLLAMA_NUM_CTX` | `16384` |
 
 ### Recommended
 
@@ -139,18 +142,16 @@ Use this if your organization restricts storing persistent secrets on disk.
 | `SENTRY_DSN` | Sentry DSN for error tracking |
 | `FIREBASE_PROJECT_ID` | Firebase project ID for the Monitor agent |
 
-## Quick Start (Claude Code Session)
-
-Run the pipeline inside a Claude Code shell — no `ANTHROPIC_API_KEY` needed. Each agent spawns a `claude` subprocess that uses your ambient session credentials.
+## Quick Start (Local — Claude API)
 
 ```bash
 # 1. Install dependencies
 npm install
 
-# 2. Configure environment (no API key required)
+# 2. Configure environment
 cp .env.local.example .env.local
-# LLM_PROVIDER defaults to "claude-code" — leave it unset or set explicitly:
-echo 'LLM_PROVIDER=claude-code' >> .env.local
+# Edit .env.local and set ANTHROPIC_API_KEY
+# (or set it later from the sidebar's environment keys dialog)
 
 # 3. (Optional) Start PostgreSQL for state persistence
 docker compose up postgres -d
@@ -161,19 +162,13 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) and click **Create Your First Project**.
 
-**How it works:** each agent call spawns `claude --print` as a subprocess. The app passes `--allowed-tools "Write Edit Bash"` so no interactive permission prompts fire during code generation. The `claude` binary is resolved from your `PATH`; override it with `CLAUDE_BIN=/path/to/claude` if needed.
-
-**Enterprise environments** (Bedrock, Vertex, or a corporate Claude Code deployment): make sure `claude --print -p "hello"` works in your shell before starting the app — the subprocess inherits your session's auth and proxy settings.
-
-> **Note:** `ANTHROPIC_API_KEY` is not read when `LLM_PROVIDER=claude-code`. GitHub, Linear, Notion, and other MCP integrations still use their own tokens from `.env.local`.
-
 ## Quick Start (Local — Ollama)
 
 Use this path to run fully offline with a local model.
 
 ```bash
 # 1. Install and start Ollama, then pull a model
-ollama pull llama3.1
+ollama pull qwen3.5:35b
 
 # 2. Install dependencies
 npm install
@@ -182,8 +177,7 @@ npm install
 cp .env.local.example .env.local
 # Set in .env.local:
 #   LLM_PROVIDER=ollama
-#   OLLAMA_BASE_URL=http://localhost:11434   # default, can omit
-#   OLLAMA_MODEL=llama3.1
+#   OLLAMA_MODEL=qwen3.5:35b   # default, can omit
 
 # 4. (Optional) Start PostgreSQL for state persistence
 docker compose up postgres -d
