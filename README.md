@@ -38,11 +38,27 @@ Copy the example file and fill in your values:
 cp .env.local.example .env.local
 ```
 
-### Required
+### LLM Provider
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LLM_PROVIDER` | `anthropic` | `anthropic` — Claude API; `ollama` — local Ollama model. Can also be switched at runtime from the sidebar. |
+
+### Required (Claude API)
 
 | Variable | Description | How to get it |
 |----------|-------------|---------------|
 | `ANTHROPIC_API_KEY` | Claude API key | [console.anthropic.com](https://console.anthropic.com/) → API Keys |
+
+Optional: `ANTHROPIC_MODEL` forces one model for every agent, overriding the per-agent defaults in the [Architecture](#architecture) table.
+
+### Ollama only
+
+| Variable | Default |
+|----------|---------|
+| `OLLAMA_BASE_URL` | `http://localhost:11434` |
+| `OLLAMA_MODEL` | `qwen3.5:35b` |
+| `OLLAMA_NUM_CTX` | `16384` |
 
 ### Recommended
 
@@ -126,7 +142,7 @@ Use this if your organization restricts storing persistent secrets on disk.
 | `SENTRY_DSN` | Sentry DSN for error tracking |
 | `FIREBASE_PROJECT_ID` | Firebase project ID for the Monitor agent |
 
-## Quick Start (Local)
+## Quick Start (Local — Claude API)
 
 ```bash
 # 1. Install dependencies
@@ -134,12 +150,39 @@ npm install
 
 # 2. Configure environment
 cp .env.local.example .env.local
-# Edit .env.local and add your ANTHROPIC_API_KEY
+# Edit .env.local and set ANTHROPIC_API_KEY
+# (or set it later from the sidebar's environment keys dialog)
 
 # 3. (Optional) Start PostgreSQL for state persistence
 docker compose up postgres -d
 
 # 4. Start the dev server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) and click **Create Your First Project**.
+
+## Quick Start (Local — Ollama)
+
+Use this path to run fully offline with a local model.
+
+```bash
+# 1. Install and start Ollama, then pull a model
+ollama pull qwen3.5:35b
+
+# 2. Install dependencies
+npm install
+
+# 3. Configure environment
+cp .env.local.example .env.local
+# Set in .env.local:
+#   LLM_PROVIDER=ollama
+#   OLLAMA_MODEL=qwen3.5:35b   # default, can omit
+
+# 4. (Optional) Start PostgreSQL for state persistence
+docker compose up postgres -d
+
+# 5. Start the dev server
 npm run dev
 ```
 

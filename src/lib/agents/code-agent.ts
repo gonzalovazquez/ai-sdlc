@@ -156,7 +156,8 @@ QA feedback (if any): ${JSON.stringify(state.qaResults, null, 2)}`;
     new HumanMessage(`[Context]\n${contextMessage}`),
   ];
 
-  let response = await invokeWithTools(getDemoModel(), conversation, tools);
+  const model = getDemoModel("claude-opus-4-6");
+  let response = await invokeWithTools(model, conversation, tools);
 
   // Verify-and-repair: type-check the workspace and feed compiler errors back
   // for a bounded number of fix rounds. Proceeds regardless after the cap.
@@ -178,7 +179,7 @@ QA feedback (if any): ${JSON.stringify(state.qaResults, null, 2)}`;
           `The generated workspace fails TypeScript compilation. Fix ALL of these errors by rewriting the affected files in full with fs_write_file. Remember: imports must match real files and exports, no packages outside the scaffold, no JSX outside .tsx files, lib/ stays plain TypeScript:\n\n${errors.slice(0, 4000)}`
         )
       );
-      response = await invokeWithTools(getDemoModel(), conversation, tools);
+      response = await invokeWithTools(model, conversation, tools);
     }
   }
 

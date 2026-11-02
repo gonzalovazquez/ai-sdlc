@@ -1,8 +1,6 @@
-import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { getDemoModel } from "../llm";
+import { AIMessage } from "@langchain/core/messages";
 import { agentLogger } from "../logger";
-import { getToolsForAgent } from "../mcp/tools";
-import { invokeWithTools } from "./invoke-with-tools";
+import { invokeAgent } from "./invoke-agent";
 import type { SDLCStateType } from "../graph/state";
 
 const log = agentLogger("monitor_agent");
@@ -47,18 +45,13 @@ Code artifacts: ${JSON.stringify(
   log.info("Starting monitoring setup");
   const start = Date.now();
 
-  const tools = await getToolsForAgent("monitor_agent");
-  log.info({ toolCount: tools.length }, "Loaded MCP tools");
-
-  const response = await invokeWithTools(
-    getDemoModel(),
-    [
-      new SystemMessage(SYSTEM_PROMPT),
-      ...state.messages,
-      new HumanMessage(`[Context]\n${contextMessage}`),
-    ],
-    tools
-  );
+  const response = await invokeAgent({
+    agentName: "monitor_agent",
+    systemPrompt: SYSTEM_PROMPT,
+    messages: state.messages,
+    contextMessage,
+    model: "claude-sonnet-4-6",
+  });
 
   const elapsed = Date.now() - start;
 

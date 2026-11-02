@@ -1,43 +1,13 @@
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatOllama } from "@langchain/ollama";
 
-let _opus: ChatAnthropic | null = null;
-let _sonnet: ChatAnthropic | null = null;
+const DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-6";
+
+const _anthropic = new Map<string, ChatAnthropic>();
 let _ollama: ChatOllama | null = null;
-let _demoAnthropic: ChatAnthropic | null = null;
 
 /**
- * Opus 4.6 — used for complex reasoning agents (Architect, Code).
- * Lazily initialized to avoid API key validation at build time.
- */
-export function getOpusModel(): ChatAnthropic {
-  if (!_opus) {
-    _opus = new ChatAnthropic({
-      model: "claude-opus-4-6",
-      maxTokens: 8192,
-      temperature: 0.3,
-    });
-  }
-  return _opus;
-}
-
-/**
- * Sonnet 4.6 — used for routine agents (PM, QA, Monitor, Design, Infra, Release).
- * Lazily initialized to avoid API key validation at build time.
- */
-export function getSonnetModel(): ChatAnthropic {
-  if (!_sonnet) {
-    _sonnet = new ChatAnthropic({
-      model: "claude-sonnet-4-6",
-      maxTokens: 4096,
-      temperature: 0.2,
-    });
-  }
-  return _sonnet;
-}
-
-/**
- * Qwen3.5 35B via local Ollama — used for all demo agents.
+ * Qwen3.5 35B via local Ollama.
  * Requires Ollama running at OLLAMA_BASE_URL (default: http://localhost:11434).
  * Override model with OLLAMA_MODEL env var.
  */
@@ -60,10 +30,8 @@ export function getOllamaModel(): ChatOllama {
  * runtime env keys change (e.g. the user sets ANTHROPIC_API_KEY in the UI).
  */
 export function resetLLMClients(): void {
-  _opus = null;
-  _sonnet = null;
+  _anthropic.clear();
   _ollama = null;
-  _demoAnthropic = null;
 }
 
 export type DemoProvider = "ollama" | "anthropic";
@@ -82,25 +50,24 @@ export function getDemoProvider(): DemoProvider {
   if (globalState.__demoProviderOverride) {
     return globalState.__demoProviderOverride;
   }
-  return process.env.LLM_PROVIDER === "anthropic" ? "anthropic" : "ollama";
+  return process.env.LLM_PROVIDER === "ollama" ? "ollama" : "anthropic";
 }
 
 /**
- * Model for the demo agents (PM, Architect, Code), selected by LLM_PROVIDER:
- * - "ollama" (default) — local inference, free but slow
- * - "anthropic" — hosted Claude, requires ANTHROPIC_API_KEY
- * Override the Anthropic model with ANTHROPIC_MODEL.
+ * Chat model for an agent, selected by LLM_PROVIDER:
+ * - "anthropic" (default) — Claude API, requires ANTHROPIC_API_KEY. Uses the
+ *   agent's requested model unless ANTHROPIC_MODEL overrides it for all agents.
+ * - "ollama" — local inference; the requested model is ignored.
  */
-export function getDemoModel(): ChatAnthropic | ChatOllama {
-  if (getDemoProvider() === "anthropic") {
-    if (!_demoAnthropic) {
-      _demoAnthropic = new ChatAnthropic({
-        model: process.env.ANTHROPIC_MODEL ?? "claude-opus-4-8",
-        maxTokens: 16384,
-        // No temperature: sampling params are rejected on Opus 4.7+.
-      });
-    }
-    return _demoAnthropic;
+export function getDemoModel(model?: string): ChatAnthropic | ChatOllama {
+  if (getDemoProvider() === "ollama") return getOllamaModel();
+
+  const id = process.env.ANTHROPIC_MODEL ?? model ?? DEFAULT_ANTHROPIC_MODEL;
+  let client = _anthropic.get(id);
+  if (!client) {
+    // No temperature: sampling params are rejected on newer Opus models.
+    client = new ChatAnthropic({ model: id, maxTokens: 16384 });
+    _anthropic.set(id, client);
   }
-  return getOllamaModel();
+  return client;
 }

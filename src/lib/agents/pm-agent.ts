@@ -1,8 +1,6 @@
-import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { getDemoModel } from "../llm";
+import { AIMessage } from "@langchain/core/messages";
 import { agentLogger } from "../logger";
-import { getToolsForAgent } from "../mcp/tools";
-import { invokeWithTools } from "./invoke-with-tools";
+import { invokeAgent } from "./invoke-agent";
 import type { SDLCStateType } from "../graph/state";
 
 const log = agentLogger("pm_agent");
@@ -44,14 +42,12 @@ export async function pmAgentNode(
   log.info("Starting requirements extraction");
   const start = Date.now();
 
-  const tools = await getToolsForAgent("pm_agent");
-  log.info({ toolCount: tools.length }, "Loaded MCP tools");
-
-  const response = await invokeWithTools(
-    getDemoModel(),
-    [new SystemMessage(SYSTEM_PROMPT), ...state.messages],
-    tools
-  );
+  const response = await invokeAgent({
+    agentName: "pm_agent",
+    systemPrompt: SYSTEM_PROMPT,
+    messages: state.messages,
+    model: "claude-sonnet-4-6",
+  });
 
   const elapsed = Date.now() - start;
 

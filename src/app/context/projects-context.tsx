@@ -75,6 +75,7 @@ type Action =
       type: "SET_STREAMING";
       projectId: string;
       isStreaming: boolean;
+      awaitingApproval?: boolean;
     }
   | {
       type: "HYDRATE_HISTORY";
@@ -153,6 +154,9 @@ function reducer(state: State, action: Action): State {
           [action.projectId]: {
             ...prev,
             isStreaming: action.isStreaming,
+            ...(action.awaitingApproval !== undefined && {
+              awaitingApproval: action.awaitingApproval,
+            }),
             error: null,
           },
         },
@@ -467,7 +471,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }) {
         (p) => p.id === projectId
       );
       if (!project) return;
-      dispatch({ type: "SET_STREAMING", projectId, isStreaming: true });
+      dispatch({ type: "SET_STREAMING", projectId, isStreaming: true, awaitingApproval: false });
       // Clear awaiting_approval on server
       fetch(`/api/projects/${projectId}`, {
         method: "PATCH",
