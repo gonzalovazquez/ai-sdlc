@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { HumanMessage } from "@langchain/core/messages";
 import { getActiveGraph, ensureActiveGraphReady } from "@/lib/graph";
+import type { ProjectConfig } from "@/lib/graph/state";
 import { logger } from "@/lib/logger";
 
 const log = logger.child({ route: "/api/agent/stream" });
@@ -15,7 +16,7 @@ export const maxDuration = 300; // 5 minutes for long-running agent chains
  * Returns: SSE stream of agent events (node starts, messages, state updates)
  */
 export async function POST(req: NextRequest) {
-  const { message, threadId } = await req.json();
+  const { message, threadId, projectConfig } = await req.json();
 
   if (!message || !threadId) {
     return new Response(
@@ -43,11 +44,36 @@ export async function POST(req: NextRequest) {
           streamMode: "updates" as const,
         };
 
-        const input = {
+        // Seed projectConfig on the first (kickoff) message so the graph
+        // starts from the platform the user actually selected in the UI,
+        // rather than the hardcoded "ios" default in the state annotation.
+        const input: {
+          messages: HumanMessage[];
+          projectConfig?: ProjectConfig;
+        } = {
           messages: [new HumanMessage(message)],
         };
+        if (projectConfig && typeof projectConfig === "object") {
+          // The annotation reducer replaces projectConfig wholesale, so fill
+          // in defaults for everything the client didn't send. The PM agent
+          // refines these later; only `platform` must survive from the UI.
+          const seed = projectConfig as Partial<ProjectConfig>;
+          input.projectConfig = {
+            name: seed.name ?? "",
+            description: seed.description ?? "",
+            platform: seed.platform ?? "ios",
+            cloudProvider: seed.cloudProvider ?? "none",
+            hasBackend: seed.hasBackend ?? false,
+            hasAuth: seed.hasAuth ?? false,
+            screenCount: seed.screenCount ?? 0,
+            dataSources: seed.dataSources ?? [],
+          };
+        }
 
-        log.info({ threadId }, "Starting agent stream");
+        log.info(
+          { threadId, platform: projectConfig?.platform },
+          "Starting agent stream"
+        );
         sendEvent("start", { threadId, timestamp: Date.now() });
 
         const streamResult = await graph.stream(input, config);

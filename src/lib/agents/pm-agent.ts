@@ -64,7 +64,10 @@ export async function pmAgentNode(
     try {
       const parsed = JSON.parse(jsonMatch[1]);
       if (parsed.projectConfig) {
-        projectConfig = parsed.projectConfig;
+        // Merge over the existing config (seeded from the user's UI selection)
+        // so fields the agent omits — most importantly `platform` — are not
+        // lost. Parsed values win per-field when present.
+        projectConfig = { ...state.projectConfig, ...parsed.projectConfig };
         log.info({ project: projectConfig.name, platform: projectConfig.platform }, "Parsed project config");
       }
     } catch {

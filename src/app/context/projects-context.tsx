@@ -444,10 +444,18 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }) {
       // Fire and forget — kick off the pipeline without awaiting
       if (data.description) {
         const kickoffMsg = `I want to build a project called "${data.name}". Platform: ${data.platform}. ${data.description}`;
+        // Seed the graph's projectConfig with the user's actual selection so
+        // the pipeline doesn't fall back to the "ios" default when the PM
+        // agent asks clarifying questions instead of emitting a config block.
         streamManagerRef.current?.sendMessage(
           newProject.id,
           kickoffMsg,
-          newProject.threadId
+          newProject.threadId,
+          {
+            name: data.name,
+            description: data.description,
+            platform: data.platform,
+          }
         );
       }
     },

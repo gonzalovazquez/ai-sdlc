@@ -102,7 +102,8 @@ export function createProjectStreamManager(onEvent: OnStreamEvent) {
   async function sendMessage(
     projectId: string,
     message: string,
-    threadId: string
+    threadId: string,
+    projectConfig?: Record<string, unknown>
   ) {
     // Abort any existing stream for this project
     controllers.get(projectId)?.abort();
@@ -124,7 +125,7 @@ export function createProjectStreamManager(onEvent: OnStreamEvent) {
       const response = await fetch("/api/agent/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, threadId }),
+        body: JSON.stringify({ message, threadId, projectConfig }),
         signal: controller.signal,
       });
 
